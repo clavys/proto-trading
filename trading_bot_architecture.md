@@ -57,3 +57,17 @@ hyperliquid-trading-bot/
 ├── requirements.txt                  # Librairies Python nécessaires
 ├── README.md                         # Documentation de base
 └── main.py                           # Point d’entrée du bot
+
+Example data/
+data/
+├── raw/           # Données brutes reçues depuis l’API
+│   ├── ETH_USD_1m.csv
+│   └── BTC_USD_1m.csv
+│
+├── processed/     # Données nettoyées + indicateurs calculés
+│   ├── ETH_USD_1m_processed.parquet
+│   └── BTC_USD_1m_processed.parquet
+│
+└── results/       # Résultats de backtests, logs de performance
+    ├── test_sma.json
+    └── pnl_log.csv
