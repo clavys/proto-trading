@@ -1,27 +1,39 @@
-
 import pandas as pd
 import numpy as np
-from datetime import datetime
 
 class Backtester:
-    def __init__(self, strategy, initial_balance=1000, fee=0.001):
+    def __init__(self, strategy, initial_balance=1000, fee=0.001, window=20):
+        """
+        strategy : objet stratégie avec méthode generate_signal(current_candle, history_slice)
+        initial_balance : capital initial
+        fee : frais par trade (ex: 0.001 = 0.1%)
+        window : nombre de bougies nécessaires pour les indicateurs (SMA, RSI, etc.)
+        """
         self.strategy = strategy
         self.balance = initial_balance
         self.fee = fee
         self.trades = []
+        self.window = window  # pour history_slice
 
     def run(self, data: pd.DataFrame):
         """
         data: DataFrame avec colonnes ['timestamp', 'open', 'high', 'low', 'close', 'volume']
         """
-        signals = self.strategy.generate_signals(data)
-        position = 0  # 0 = neutre, 1 = long, -1 = short
+        position = 0  # 0 = neutre, 1 = long
         entry_price = 0
 
         for i in range(len(data)):
-            price = data['close'].iloc[i]
-            signal = signals.iloc[i]
+            # history_slice = les dernières 'window' bougies avant la bougie courante
+            start_idx = max(0, i - self.window)
+            history_slice = data.iloc[start_idx:i]  # DataFrame vide si i < window
+            current_candle = data.iloc[i]
 
+            # générer le signal pour cette bougie
+            signal = self.strategy.generate_signal(current_candle)
+
+            price = current_candle['close']
+
+            # logique d'achat / vente simple
             if signal == 1 and position == 0:  # Buy
                 position = 1
                 entry_price = price
