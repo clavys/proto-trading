@@ -11,6 +11,7 @@ hyperliquid-trading-bot/
 │
 ├── src/
 │   ├── core/                         # Logique principale du bot
+|   |   ├── signal.py                 # Contrat de communication entre les stratégies et le bot
 │   │   ├── bot.py                    # Gère les stratégies et exécute le loop principal
 │   │   ├── exchange.py               # Interface avec l’API Hyperliquid (Info / Exchange)
 │   │   ├── data.py                   # Récupération et prétraitement des données (candles, OHLCV)
