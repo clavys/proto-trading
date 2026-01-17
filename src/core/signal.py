@@ -2,6 +2,10 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import Optional
 
+class MarketType(Enum):
+    SPOT = "SPOT"
+    PERP = "PERP"
+
 class SignalAction(Enum):
     BUY = "BUY"
     SELL = "SELL"
