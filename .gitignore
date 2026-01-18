@@ -1,0 +1,12 @@
+# Environnement virtuel
+venv/
+.venv/
+env/
+
+# Fichiers de données (Binance, etc.)
+data/raw/*.csv
+data/raw/*.zip
+
+# Python
+__pycache__/
+*.py[cod]

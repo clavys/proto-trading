@@ -21,6 +21,7 @@ class OrderType(Enum):
 @dataclass
 class TradeSignal:
     action: SignalAction
+    symbol: str
     order_type: OrderType = OrderType.MARKET
     price: Optional[float] = None
     leverage: int = 1
