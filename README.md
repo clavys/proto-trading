@@ -13,6 +13,12 @@ source venv/bin/activate
 When your shell is inside the python env, install the hyperliquid package : 
 ```
 pip install hyperliquid-python-sdk
+
+### back-test
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install pandas pandas_ta numpy
+pip install matplotlib (backtest)
 ```
 
 ### Step 1 : Algorithmic trade bot 

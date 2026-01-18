@@ -65,6 +65,7 @@ class Backtester:
     def _open_position(self, signal: TradeSignal, price: float, timestamp):
         self.position = signal
         self.entry_price = price
+        self.entry_time = timestamp
         # Appliquer les frais à l'entrée
         self.balance -= self.balance * self.fee
 
@@ -83,6 +84,8 @@ class Backtester:
         self.balance -= self.balance * self.fee  # Frais de sortie
         
         self.trades.append({
+            'entry_time': self.entry_time,
+            'exit_time': timestamp,
             'entry_price': self.entry_price,
             'exit_price': price,
             'pnl_pct': pnl_pct,
