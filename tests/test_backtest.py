@@ -1,52 +1,32 @@
-import sys
-import os
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from src.strategies.dummy_strategy import DummyStrategy
+# tests/test_backtest.py
+import pandas as pd
+from src.core.data import DataHandler
+from src.strategies.sma_crossover import SMACrossStrategy
 from src.utils.backtest import Backtester
 
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-
-# Nombre de bougies fictives
-num_candles = 100 
-
-# Date de départ
-start_time = datetime(2025, 10, 15, 0, 0)
-
-# Générer les timestamps
-timestamps = [start_time + timedelta(minutes=i) for i in range(num_candles)]
-
-# Générer des prix fictifs
-np.random.seed(42)  # pour reproductibilité
-prices = np.cumsum(np.random.randn(num_candles)) + 100  # fluctuation autour de 100
-
-# Créer OHLCV fictif
-data = pd.DataFrame({
-    "timestamp": timestamps,
-    "open": prices + np.random.rand(num_candles),
-    "high": prices + np.random.rand(num_candles),
-    "low": prices - np.random.rand(num_candles),
-    "close": prices,
-    "volume": np.random.randint(1, 100, size=num_candles)
-})
-
-
-
-
-strategy = DummyStrategy(switch_every=5)
-backtester = Backtester(strategy=strategy, initial_balance=1000, fee=0.001, window=5)
+def run_simulation():
+    # 1. Charger le fichier CSV (Binance n'a pas de titres de colonnes, donc header=None)
+    path = "data/raw/BTCUSDT-1m-2026-01-14.csv"
+    raw_data = pd.read_csv(path, header=None)
     
-results = backtester.run(data)
+    # 2. Transformer les données au format standard
+    data = DataHandler.normalize_binance_klines(raw_data)
     
-print("Final Balance:", results["final_balance"])
-print("Total PnL:", results["total_pnl"])
-print("Number of Trades:", results["num_trades"])
-print("Average PnL per Trade:", results["avg_pnl"])
+    # 3. Choisir la stratégie (ex: SMA 9 et 21)
+    # Note : avec seulement 1440 lignes, évite des SMA trop longues (ex: 200)
+    strategy = SMACrossStrategy(fast_period=9, slow_period=21)
     
-assert results["final_balance"] != 1000  # Le solde final devrait changer
-assert results["num_trades"] > 0  # Il devrait y avoir au moins un trade
-print(results["final_balance"], results["total_pnl"], results["num_trades"], results["avg_pnl"])
+    # 4. Lancer le backtester
+    backtester = Backtester(strategy=strategy, initial_balance=1000, fee=0.001)
+    results = backtester.run(data, metadata={"symbol": "BTCUSDT"})
+    
+    # 5. Afficher les résultats
+    print(f"--- Rapport de Simulation ---")
+    print(f"Période : {data['timestamp'].min()} à {data['timestamp'].max()}")
+    print(f"Solde final : {results['final_balance']:.2f} USDT")
+    print(f"Nombre de trades : {results['num_trades']}")
+    print(f"Win Rate : {results['win_rate_pct']:.2f}%")
+
+if __name__ == "__main__":
+    run_simulation()
 
