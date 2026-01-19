@@ -22,9 +22,12 @@ class Backtester:
         self.peak_balance = initial_balance  # Peak pour calcul du drawdown
         self.last_price = initial_balance  # Dernier prix pour position ouverte
 
-    def run(self, data: pd.DataFrame, metadata: dict = None):
+    def run(self, data: pd.DataFrame, metadata: dict = None, detailed: bool = True):
         """
         Exécute la simulation sur un DataFrame standardisé.
+        :param data: DataFrame avec les données de marché
+        :param metadata: Metadata optionnelles (symbole, etc.)
+        :param detailed: Si False, mode léger pour l'optimisation (pas de stockage des courbes)
         """
         if metadata is None:
             metadata = {'symbol': 'UNKNOWN'}
@@ -46,17 +49,23 @@ class Backtester:
             # 2. Logique d'exécution
             self._handle_signal(signal, current_price, timestamp)
 
-            # 3. Calcul du portefeuille total et sauvegarde
-            total_balance = self.available_balance + self._get_position_value(current_price)
-            self.equity_curve.append(total_balance)
-            
-            # Tracking du drawdown
-            if total_balance > self.peak_balance:
-                self.peak_balance = total_balance
-            drawdown = ((self.peak_balance - total_balance) / self.peak_balance) * 100
-            self.drawdown_curve.append(drawdown)
+            # 3. Mode détaillé : stockage des courbes
+            if detailed:
+                total_balance = self.available_balance + self._get_position_value(current_price)
+                self.equity_curve.append(total_balance)
+                
+                # Tracking du drawdown
+                if total_balance > self.peak_balance:
+                    self.peak_balance = total_balance
+                drawdown = ((self.peak_balance - total_balance) / self.peak_balance) * 100
+                self.drawdown_curve.append(drawdown)
+            else:
+                # Mode léger : juste update du peak pour max_drawdown final
+                total_balance = self.available_balance + self._get_position_value(current_price)
+                if total_balance > self.peak_balance:
+                    self.peak_balance = total_balance
 
-        return self._summary()
+        return self._summary(detailed=detailed)
 
     def _handle_signal(self, signal: TradeSignal, price: float, timestamp):
         # Fermeture de position si signal opposé ou CLOSE
@@ -114,7 +123,7 @@ class Backtester:
         self.position = None
         self.invested_amount = 0
 
-    def _summary(self):
+    def _summary(self, detailed: bool = True):
         df_trades = pd.DataFrame(self.trades)
         
         # Solde final = cash disponible + position ouverte (si existe)
@@ -145,12 +154,18 @@ class Backtester:
             profit_factor = total_wins / total_losses if total_losses > 0 else 0
         
         # Drawdown
-        max_drawdown = max(self.drawdown_curve) if self.drawdown_curve else 0
+        max_drawdown = 0
+        if detailed and self.drawdown_curve:
+            max_drawdown = max(self.drawdown_curve)
+        elif not detailed:
+            # En mode léger, calculer le max drawdown final
+            total_balance_final = self.available_balance + self._get_position_value(self.last_price)
+            max_drawdown = ((self.peak_balance - total_balance_final) / self.peak_balance) * 100 if self.peak_balance > 0 else 0
         
-        # Sharpe Ratio (annualisé, assumant 252 jours de trading)
-        sharpe_ratio = self._calculate_sharpe_ratio()
+        # Sharpe Ratio (annualisé, assumant 252 jours de trading) - seulement en mode détaillé
+        sharpe_ratio = self._calculate_sharpe_ratio() if detailed else 0
         
-        return {
+        summary = {
             "initial_balance": self.initial_balance,
             "final_balance": final_balance,
             "total_pnl_cash": total_pnl,
@@ -163,9 +178,14 @@ class Backtester:
             "max_drawdown_pct": max_drawdown,
             "sharpe_ratio": sharpe_ratio,
             "trades": self.trades,
-            "equity_curve": self.equity_curve,
-            "drawdown_curve": self.drawdown_curve
         }
+        
+        # Ajouter les courbes seulement en mode détaillé
+        if detailed:
+            summary["equity_curve"] = self.equity_curve
+            summary["drawdown_curve"] = self.drawdown_curve
+        
+        return summary
     
     def _get_position_value(self, current_price: float) -> float:
         """Calcule la valeur actuelle de la position ouverte"""
