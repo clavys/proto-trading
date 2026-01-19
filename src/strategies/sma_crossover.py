@@ -32,8 +32,11 @@ class SMACrossStrategy(BaseStrategy):
         action = SignalAction.HOLD
 
         # Détection du croisement
-        is_bullish_cross = (f_prev <= s_prev and f_curr > s_curr)
-        is_bearish_cross = (f_prev >= s_prev and f_curr < s_curr)
+        #is_bullish_cross = (f_prev <= s_prev and f_curr > s_curr)
+        #is_bearish_cross = (f_prev >= s_prev and f_curr < s_curr)
+
+        is_bullish_cross = (f_prev >= s_prev and f_curr < s_curr)
+        is_bearish_cross = (f_prev <= s_prev and f_curr > s_curr)
 
         # Filtre Delta
         delta = abs(f_curr - s_curr)
