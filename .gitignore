@@ -6,6 +6,7 @@ env/
 # Fichiers de données (Binance, etc.)
 data/raw/*.csv
 data/raw/*.zip
+*.csv
 
 # Python
 __pycache__/

@@ -15,7 +15,7 @@ def run_simulation():
     
     # 3. Choisir la stratégie (ex: SMA 9 et 21)
     # Note : avec seulement 1440 lignes, évite des SMA trop longues (ex: 200)
-    strategy = SMACrossStrategy(fast_period=15, slow_period=40, min_delta_pct=0, cooldown=5, verbose=True)
+    strategy = SMACrossStrategy(fast_period=30, slow_period=150, min_delta_pct=0, cooldown=15, verbose=True)
     
     # 4. Lancer le backtester
     backtester = Backtester(strategy=strategy, initial_balance=1000, fee=0.0001)
