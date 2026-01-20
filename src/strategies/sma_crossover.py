@@ -14,21 +14,39 @@ class SMACrossStrategy(BaseStrategy):
         self.min_data_required = slow_period + 5
         self.last_signal_index = -cooldown
 
-    def generate_signal(self, df: pd.DataFrame, metadata: dict) -> TradeSignal:
+    def prepare_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Pré-calcul des SMA sur le DataFrame entier (vectorisé, très rapide).
+        Appelé UNE SEULE FOIS avant le backtest.
+        """
+        df = df.copy()
+        df['fast_sma'] = df['close'].rolling(window=self.fast_period).mean()
+        df['slow_sma'] = df['close'].rolling(window=self.slow_period).mean()
+        return df
+
+    @classmethod
+    def validate_params(cls, params: dict) -> bool:
+        """
+        Valide que la SMA rapide est plus petite que la SMA lente.
+        """
+        if "fast_period" in params and "slow_period" in params:
+            if params["fast_period"] >= params["slow_period"]:
+                return False
+        return True
+
+    def generate_signal(self, df: pd.DataFrame, current_index: int, metadata: dict) -> TradeSignal:
         symbol = metadata.get('symbol', 'UNKNOWN')
-        current_idx = len(df)
         
-        if current_idx < self.min_data_required:
+        if current_index < self.min_data_required:
             return TradeSignal(action=SignalAction.HOLD, symbol=symbol)
 
-        # Calcul des SMA
-        fast_sma = df['close'].rolling(window=self.fast_period).mean()
-        slow_sma = df['close'].rolling(window=self.slow_period).mean()
-
-        # On prend les 2 dernières valeurs CLOSES (-1 et -2)
-        f_curr, f_prev = fast_sma.iloc[-1], fast_sma.iloc[-2]
-        s_curr, s_prev = slow_sma.iloc[-1], slow_sma.iloc[-2]
-        current_price = df['close'].iloc[-1]
+        # Les SMA sont pré-calculées dans df['fast_sma'] et df['slow_sma']
+        # On lit directement les valeurs à l'index courant (très rapide)
+        f_curr = df['fast_sma'].iloc[current_index]
+        f_prev = df['fast_sma'].iloc[current_index - 1]
+        s_curr = df['slow_sma'].iloc[current_index]
+        s_prev = df['slow_sma'].iloc[current_index - 1]
+        current_price = df['close'].iloc[current_index]
 
         action = SignalAction.HOLD
 
@@ -41,19 +59,19 @@ class SMACrossStrategy(BaseStrategy):
         required_delta = current_price * self.min_delta_pct
 
         if is_bullish_cross and delta >= required_delta:
-            if (current_idx - self.last_signal_index) >= self.cooldown:
+            if (current_index - self.last_signal_index) >= self.cooldown:
                 action = SignalAction.LONG
                 if self.verbose:
-                    print(f"DEBUG: Signal LONG détecté à {df['timestamp'].iloc[-1]} | Fast: {f_curr:.2f} > Slow: {s_curr:.2f}")
+                    print(f"DEBUG: Signal LONG détecté à {df['timestamp'].iloc[current_index]} | Fast: {f_curr:.2f} > Slow: {s_curr:.2f}")
 
         elif is_bearish_cross and delta >= required_delta:
-            if (current_idx - self.last_signal_index) >= self.cooldown:
+            if (current_index - self.last_signal_index) >= self.cooldown:
                 action = SignalAction.SHORT
                 if self.verbose:
-                    print(f"DEBUG: Signal SHORT détecté à {df['timestamp'].iloc[-1]} | Fast: {f_curr:.2f} < Slow: {s_curr:.2f}")
+                    print(f"DEBUG: Signal SHORT détecté à {df['timestamp'].iloc[current_index]} | Fast: {f_curr:.2f} < Slow: {s_curr:.2f}")
 
         if action != SignalAction.HOLD:
-            self.last_signal_index = current_idx
+            self.last_signal_index = current_index
 
         return TradeSignal(
             action=action,

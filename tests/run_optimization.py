@@ -10,8 +10,8 @@ def run_optimization():
     raw_data = pd.read_csv(path, header=None)
     data = DataHandler.normalize_binance_klines(raw_data)
 
-    # 2. Définition de la grille de paramètres (Modulable à souhait)
-    # Ici vous contrôlez la finesse de la recherche
+    # 2. Définition de la grille de paramètres
+    # contrôle de la finesse de la recherche
     param_grid = {
         "fast_period": [5, 10, 15, 20, 30],
         "slow_period": [20, 40, 60, 80, 100, 150, 200],

@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os
 from src.core.signal import SignalAction, TradeSignal
 
 class Backtester:
@@ -22,29 +23,51 @@ class Backtester:
         self.peak_balance = initial_balance  # Peak pour calcul du drawdown
         self.last_price = initial_balance  # Dernier prix pour position ouverte
 
-    def run(self, data: pd.DataFrame, metadata: dict = None, detailed: bool = True):
+    @staticmethod
+    def extract_symbol_from_path(filepath: str) -> str:
+        """
+        Extrait le symbole du chemin du fichier (ex: 'data/raw/BTCUSDT-1m-2026-01-14.csv' -> 'BTCUSDT')
+        """
+        try:
+            filename = os.path.basename(filepath)
+            symbol = filename.split('-')[0]  # Prend le premier segment avant le '-'
+            return symbol
+        except:
+            return 'UNKNOWN'
+
+    def run(self, data: pd.DataFrame, metadata: dict = None, detailed: bool = True, filepath: str = None):
         """
         Exécute la simulation sur un DataFrame standardisé.
         :param data: DataFrame avec les données de marché
         :param metadata: Metadata optionnelles (symbole, etc.)
         :param detailed: Si False, mode léger pour l'optimisation (pas de stockage des courbes)
+        :param filepath: Chemin du fichier pour extraire le symbol automatiquement
         """
         if metadata is None:
-            metadata = {'symbol': 'UNKNOWN'}
+            metadata = {}
+        
+        # Auto-extraction du symbol si filepath fourni et symbol pas dans metadata
+        if filepath and 'symbol' not in metadata:
+            metadata['symbol'] = self.extract_symbol_from_path(filepath)
+        
+        # Fallback si toujours pas de symbol
+        if 'symbol' not in metadata:
+            metadata['symbol'] = 'UNKNOWN'
+
+        # ✨ PRÉ-CALCUL des indicateurs (une seule fois, vectorisé)
+        data = self.strategy.prepare_indicators(data)
 
         # On commence après que suffisamment de données soient disponibles pour les indicateurs
         # Si la stratégie a un attribut min_data_required, on l'utilise
         start_idx = getattr(self.strategy, 'min_data_required', 1)
 
         for i in range(start_idx, len(data)):
-            # On passe une vue des données jusqu'à l'instant T (fenêtre glissante)
-            history = data.iloc[:i+1]
             current_price = data.iloc[i]['close']
             timestamp = data.iloc[i].get('timestamp', i)
             self.last_price = current_price  # Track le dernier prix
 
-            # 1. Générer le signal
-            signal = self.strategy.generate_signal(history, metadata)
+            # 1. Générer le signal (passer le DataFrame ENTIER + index courant)
+            signal = self.strategy.generate_signal(data, i, metadata)
 
             # 2. Logique d'exécution
             self._handle_signal(signal, current_price, timestamp)
