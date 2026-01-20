@@ -7,7 +7,10 @@ env/
 data/raw/*.csv
 data/raw/*.zip
 *.csv
+*.png
+*.jpg
 
 # Python
 __pycache__/
 *.py[cod]
+recommended_param_grid.py

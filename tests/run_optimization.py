@@ -12,11 +12,19 @@ def run_optimization():
 
     # 2. Définition de la grille de paramètres
     # contrôle de la finesse de la recherche
+    
     param_grid = {
         "fast_period": [5, 10, 15, 20, 30],
         "slow_period": [20, 40, 60, 80, 100, 150, 200],
         "min_delta_pct": [0.0, 0.0005, 0.001],
         "cooldown": [5, 15]
+    }
+
+    param_gridT = {
+        "fast_period": [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34],
+        "slow_period": [80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136],
+        "min_delta_pct": [0.0, 0.001, 0.001, 0.001, 0.002, 0.002],
+        "cooldown": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
     }
 
     # 3. Lancement de la recherche (mode Performance activé automatiquement)
