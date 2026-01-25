@@ -155,10 +155,17 @@ class GridSearchAnalyzer:
             best_value = grouped.idxmax()
             values = sorted(self.df[param].unique())
             
+            # Skip si seulement 1 valeur testée
+            if len(values) < 2:
+                print(f"\n⚠️ {param}: Seulement 1 valeur testée ({best_value}). Augmentez la plage pour la prochaine optimisation.")
+                recommendations[param] = [best_value]
+                continue
+            
             # Déterminer le range optimal
             best_idx = values.index(best_value)
-            lower_bound = values[best_idx - 1] if best_idx > 0 else best_value - (values[1] - values[0])
-            upper_bound = values[best_idx + 1] if best_idx < len(values) - 1 else best_value + (values[-1] - values[-2])
+            step = values[1] - values[0]
+            lower_bound = values[best_idx - 1] if best_idx > 0 else best_value - step
+            upper_bound = values[best_idx + 1] if best_idx < len(values) - 1 else best_value + step
             
             # Créer une grille plus fine autour du meilleur
             if isinstance(best_value, (int, np.integer)):

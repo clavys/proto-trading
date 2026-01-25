@@ -1,13 +1,15 @@
 # tests/test_backtest.py
 import pandas as pd
 from src.core.data import DataHandler
-from src.strategies.sma_crossover import SMACrossStrategy
+from src.strategies.sma_crossover import SMACrossStrategyReverse
+from src.strategies.sma_crossover_opti import SMACrossEnhanced
 from src.utils.backtest import Backtester
 from src.utils.visualizer import plot_backtest_results
 
 def run_simulation():
     # 1. Charger le fichier CSV (Binance n'a pas de titres de colonnes, donc header=None)
-    path = "data/raw/BTCUSDT-1m-2026-01-14.csv"
+    path = "data/raw/BTCUSDT-1m-2025-11.csv"
+    #path = "data/raw/BTCUSDT-1m-2026-01-14.csv"
     raw_data = pd.read_csv(path, header=None)
     
     # 2. Transformer les données au format standard
@@ -15,7 +17,19 @@ def run_simulation():
     
     # 3. Choisir la stratégie (ex: SMA 9 et 21)
     # Note : avec seulement 1440 lignes, évite des SMA trop longues (ex: 200)
-    strategy = SMACrossStrategy(fast_period=24, slow_period=88, min_delta_pct=0, cooldown=7, verbose=True)
+    strategy = SMACrossStrategyReverse(fast_period=24, slow_period=88, stop_loss_pct=0.0, cooldown=16, verbose=False)
+    '''
+    strategy = SMACrossEnhanced(
+        fast_period=30, 
+        slow_period=90, 
+        trend_period=200, 
+        atr_period=14, 
+        tp_mult=2.0, 
+        sl_mult=1.5, 
+        use_trend_filter=True, 
+        cooldown=20
+    )
+    '''
     
     # 4. Lancer le backtester
     backtester = Backtester(strategy=strategy, initial_balance=1000, fee=0.0001)

@@ -22,6 +22,8 @@ class Backtester:
         self.position = None  # Stocke le TradeSignal actuel ou None
         self.peak_balance = initial_balance  # Peak pour calcul du drawdown
         self.last_price = initial_balance  # Dernier prix pour position ouverte
+        self.position_min_price = None  # Minimum de prix atteint dans la position (pour LONG)
+        self.position_max_price = None  # Maximum de prix atteint dans la position (pour SHORT)
 
     @staticmethod
     def extract_symbol_from_path(filepath: str) -> str:
@@ -91,6 +93,19 @@ class Backtester:
         return self._summary(detailed=detailed)
 
     def _handle_signal(self, signal: TradeSignal, price: float, timestamp):
+        # Tracker le min/max du prix pendant la position (pour appliquer le SL à la fermeture)
+        if self.position:
+            if self.position.action == SignalAction.LONG:
+                if self.position_min_price is None:
+                    self.position_min_price = price
+                else:
+                    self.position_min_price = min(self.position_min_price, price)
+            else:  # SHORT
+                if self.position_max_price is None:
+                    self.position_max_price = price
+                else:
+                    self.position_max_price = max(self.position_max_price, price)
+        
         # Fermeture de position si signal opposé ou CLOSE
         if self.position:
             should_close = (
@@ -99,24 +114,70 @@ class Backtester:
             )
             
             if should_close:
-                self._close_position(price, timestamp)
+                # Appliquer le stop-loss au prix de fermeture si SL a été atteint
+                exit_price = price
+                if self.position.stop_loss is not None:
+                    if self.position.action == SignalAction.LONG and self.position_min_price is not None:
+                        # Si le prix a baissé au-dessous du SL, fermer au SL
+                        if self.position_min_price <= self.position.stop_loss:
+                            exit_price = self.position.stop_loss
+                    elif self.position.action == SignalAction.SHORT and self.position_max_price is not None:
+                        # Si le prix a monté au-dessus du SL, fermer au SL
+                        if self.position_max_price >= self.position.stop_loss:
+                            exit_price = self.position.stop_loss
+                
+                self._close_position(exit_price, timestamp, reason='signal')
+                self.position_min_price = None
+                self.position_max_price = None
 
         # Ouverture de position
         if self.position is None:
             if signal.action in [SignalAction.LONG, SignalAction.SHORT]:
                 self._open_position(signal, price, timestamp)
+                self.position_min_price = None
+                self.position_max_price = None
 
     def _open_position(self, signal: TradeSignal, price: float, timestamp):
         self.position = signal
-        self.entry_price = price
+        self.entry_price = float(price)  # Force float type
         self.entry_time = timestamp
+        
+        # Stocker le stop-loss avec typage float strict
+        self.position.stop_loss = float(signal.stop_loss) if signal.stop_loss is not None else None
         
         # Montant investi avec frais
         # On utilise tout le cash disponible
-        self.invested_amount = self.available_balance * (1 - self.fee)
-        self.available_balance -= self.invested_amount
+        self.entry_fee = self.available_balance * self.fee
+        self.invested_amount = self.available_balance - self.entry_fee
+        self.available_balance = 0
 
-    def _close_position(self, price: float, timestamp):
+    def _check_stop_loss(self, current_price: float) -> bool:
+        """
+        Vérifie si le stop-loss est atteint pour la position actuelle.
+        Retourne True si le SL est hit, False sinon.
+        """
+        if not self.position or self.position.stop_loss is None:
+            return False
+        
+        current_price = float(current_price)  # Force float type
+        stop_loss = float(self.position.stop_loss)  # Force float type
+        
+        if self.position.action == SignalAction.LONG:
+            # Pour un LONG, le SL est atteint si le prix baisse SOUS le stop_loss
+            return current_price <= stop_loss
+        else:  # SHORT
+            # Pour un SHORT, le SL est atteint si le prix monte ABOVE le stop_loss
+            return current_price >= stop_loss
+    
+    def _close_position(self, price: float, timestamp, reason: str = 'signal'):
+        """
+        Ferme la position actuelle.
+        :param price: Prix de fermeture (float)
+        :param timestamp: Timestamp de la fermeture
+        :param reason: Raison de la fermeture ('signal', 'stop_loss', etc.)
+        """
+        price = float(price)  # Force float type
+        
         # Calcul du PnL en fonction du sens (Long ou Short)
         if self.position.action == SignalAction.LONG:
             pnl_pct = (price - self.entry_price) / self.entry_price
@@ -127,9 +188,14 @@ class Backtester:
         leverage = getattr(self.position, 'leverage', 1)
         pnl_cash = (self.invested_amount * pnl_pct) * leverage
         
-        # Récupérer le montant investi + PnL, en déduisant les frais de sortie
-        exit_amount = self.invested_amount + pnl_cash
-        exit_amount -= exit_amount * self.fee  # Frais de sortie
+        # Les frais de SORTIE sont les mêmes que les frais d'entrée (constants)
+        exit_fee = self.entry_fee
+        
+        # Le montant final après frais de sortie
+        exit_amount = self.invested_amount + pnl_cash - exit_fee
+        
+        # Le vrai PnL cash après TOUS les frais (entry_fee + exit_fee)
+        pnl_cash_after_fees = pnl_cash - exit_fee
         
         self.available_balance += exit_amount
         
@@ -139,9 +205,11 @@ class Backtester:
             'entry_price': self.entry_price,
             'exit_price': price,
             'pnl_pct': pnl_pct,
-            'pnl_cash': pnl_cash,
+            'pnl_cash': pnl_cash_after_fees,
             'type': self.position.action,
-            'leverage': leverage
+            'leverage': leverage,
+            'exit_reason': reason,
+            'stop_loss': self.position.stop_loss
         })
         self.position = None
         self.invested_amount = 0

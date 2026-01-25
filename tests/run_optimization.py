@@ -1,34 +1,29 @@
 # tests/run_optimization.py
 import pandas as pd
 from src.core.data import DataHandler
-from src.strategies.sma_crossover import SMACrossStrategy
+from src.strategies.sma_crossover import SMACrossStrategyReverse
 from src.optimization.grid_search import GridSearch
 
 def run_optimization():
     # 1. Préparation des données
-    path = "data/raw/BTCUSDT-1m-2026-01-14.csv"
+    path = "data/raw/BTCUSDT-1m-2025-11.csv"
     raw_data = pd.read_csv(path, header=None)
     data = DataHandler.normalize_binance_klines(raw_data)
 
     # 2. Définition de la grille de paramètres
-    # contrôle de la finesse de la recherche
-    
+    # Concentration sur stop_loss_pct avec 25 combinaisons
+
     param_grid = {
-        "fast_period": [5, 10, 15, 20, 30],
-        "slow_period": [20, 40, 60, 80, 100, 150, 200],
-        "min_delta_pct": [0.0, 0.0005, 0.001],
-        "cooldown": [5, 15]
+        "fast_period": [24],
+        "slow_period": [88],
+        "stop_loss_pct": [0,0.0005, 0.001, 0.0015, 0.002, 0.0025, 0.003, 0.0035, 0.004],
+        "cooldown": [16, 17, 18],
     }
 
-    param_gridT = {
-        "fast_period": [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34],
-        "slow_period": [80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136],
-        "min_delta_pct": [0.0, 0.001, 0.001, 0.001, 0.002, 0.002],
-        "cooldown": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-    }
+
 
     # 3. Lancement de la recherche (mode Performance activé automatiquement)
-    optimizer = GridSearch(SMACrossStrategy, data, fee=0.00035)
+    optimizer = GridSearch(SMACrossStrategyReverse, data, fee=0.0001)
     best_configs = optimizer.optimize(param_grid)
 
     # 4. Affichage des 10 meilleures configurations
@@ -37,7 +32,7 @@ def run_optimization():
     print("="*120)
     
     # Sélection des colonnes pertinentes pour l'affichage
-    display_cols = ["fast_period", "slow_period", "min_delta_pct", "cooldown", 
+    display_cols = ["fast_period", "slow_period", "stop_loss_pct", "cooldown", 
                     "final_balance", "pnl_cash", "roi_pct", "num_trades", 
                     "win_rate_pct", "profit_factor", "max_drawdown_pct"]
     
@@ -51,7 +46,7 @@ def run_optimization():
     print(f"Paramètres:")
     print(f"  - Fast Period: {int(best['fast_period'])}")
     print(f"  - Slow Period: {int(best['slow_period'])}")
-    print(f"  - Min Delta %: {best['min_delta_pct']}")
+    print(f"  - Stop Loss %: {best['stop_loss_pct']:.4f}")
     print(f"  - Cooldown: {int(best['cooldown'])}")
     print(f"\nPerformances:")
     print(f"  - Profit: ${best['pnl_cash']:.2f}")
