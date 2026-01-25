@@ -8,8 +8,9 @@ from src.utils.visualizer import plot_backtest_results
 
 def run_simulation():
     # 1. Charger le fichier CSV (Binance n'a pas de titres de colonnes, donc header=None)
-    path = "data/raw/BTCUSDT-1m-2025-11.csv"
+    path = "data/raw/BTCUSDT-1m-2025-05.csv"
     #path = "data/raw/BTCUSDT-1m-2026-01-14.csv"
+    #path = "data/raw/BTCUSDT-1a-2025.csv"
     raw_data = pd.read_csv(path, header=None)
     
     # 2. Transformer les données au format standard
@@ -17,7 +18,7 @@ def run_simulation():
     
     # 3. Choisir la stratégie (ex: SMA 9 et 21)
     # Note : avec seulement 1440 lignes, évite des SMA trop longues (ex: 200)
-    strategy = SMACrossStrategyReverse(fast_period=24, slow_period=88, stop_loss_pct=0.0, cooldown=16, verbose=False)
+    strategy = SMACrossStrategyReverse(fast_period=19, slow_period=72, stop_loss_pct=0.006, cooldown=6, verbose=False)
     '''
     strategy = SMACrossEnhanced(
         fast_period=30, 

@@ -6,7 +6,7 @@ from src.optimization.grid_search import GridSearch
 
 def run_optimization():
     # 1. Préparation des données
-    path = "data/raw/BTCUSDT-1m-2025-11.csv"
+    path = "data/raw/BTCUSDT-1m-2025-02.csv"
     raw_data = pd.read_csv(path, header=None)
     data = DataHandler.normalize_binance_klines(raw_data)
 
@@ -14,10 +14,10 @@ def run_optimization():
     # Concentration sur stop_loss_pct avec 25 combinaisons
 
     param_grid = {
-        "fast_period": [24],
-        "slow_period": [88],
-        "stop_loss_pct": [0,0.0005, 0.001, 0.0015, 0.002, 0.0025, 0.003, 0.0035, 0.004],
-        "cooldown": [16, 17, 18],
+        "fast_period": [17,18,19,],
+        "slow_period": [70, 72, 74, 76],
+        "stop_loss_pct": [0.004, 0.005, 0.006],
+        "cooldown": [6, 8, 10, 12],
     }
 
 
