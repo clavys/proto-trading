@@ -45,7 +45,10 @@ hyperliquid-trading-bot/
 │       ├── ml_models.py                 # Modèles de machine learning (Random Forest, etc.)
 │       ├── deep_learning.py             # Réseaux neuronaux (LSTM / CNN / etc.)
 │       └── reinforcement.py             # Agent de trading par renforcement
-│
+│ 
+├─  scripts/
+│   └── download_data.py                 # --------->  FOR YOU  <---------
+│ 
 ├── config/                              # Configurations du projet
 │   ├── config_testnet.json              # Paramètres pour le testnet
 │   ├── config_mainnet.json              # Paramètres pour le mainnet
