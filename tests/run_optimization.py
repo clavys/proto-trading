@@ -1,8 +1,8 @@
 # tests/run_optimization.py
 import pandas as pd
-from src.core.data import DataHandler
 from src.strategies.sma_crossover import SMACrossStrategyReverse
 from src.optimization.grid_search import GridSearch
+from src.core.data.handler import DataHandler
 
 def run_optimization():
     # 1. Préparation des données

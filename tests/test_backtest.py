@@ -1,6 +1,6 @@
 # tests/test_backtest.py
 import pandas as pd
-from src.core.data import DataHandler
+from src.core.data.handler import DataHandler
 from src.strategies.sma_crossover import SMACrossStrategyReverse
 from src.strategies.sma_crossover_opti import SMACrossEnhanced
 from src.utils.backtest import Backtester

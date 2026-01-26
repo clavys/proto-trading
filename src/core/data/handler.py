@@ -4,41 +4,54 @@ Transforme les données brutes (venant de fichiers CSV, de l'API Hyperliquid
 ou d'autres échanges) en un format standardisé.
 """
 
+import pandas as pd
+import numpy as np
+from typing import Optional
+
 
 class DataHandler:
     """
-    Gère la transformation et la standardisation des données de marché.
+    Cette classe est le 'cerveau' de la standardisation. 
+    Elle transforme les données brutes (Binance, Hyperliquid, CSV) en format utilisable par tes stratégies.
     """
     
-    def __init__(self):
-        pass
-    
-    def load_from_csv(self, file_path):
+    @staticmethod
+    def normalize_ohlcv(df: pd.DataFrame, col_map: dict = None) -> pd.DataFrame:
+        """Standardise les colonnes pour les stratégies (OHLCV classique)."""
+        if col_map:
+            df = df.rename(columns=col_map)
+        
+        # Colonnes minimales requises pour que pandas_ta et tes stratégies fonctionnent
+        required = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+        
+        # Nettoyage et tri
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df = df.sort_values('timestamp')
+
+        # Conversion forcée en numérique pour éviter les erreurs de calcul (SMA, etc.)
+        for col in ['open', 'high', 'low', 'close', 'volume']:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+        
+        return df[required].reset_index(drop=True)
+
+    @staticmethod
+    def normalize_binance_klines(df: pd.DataFrame) -> pd.DataFrame:
         """
-        Charge des données depuis un fichier CSV.
+        Spécifique au format brut des fichiers CSV de Binance (sans headers).
         """
-        pass
-    
-    def load_from_api(self, api_params):
-        """
-        Charge des données depuis une API.
-        """
-        pass
-    
-    def standardize_format(self, raw_data):
-        """
-        Standardise le format des données brutes.
-        """
-        pass
-    
-    def validate_data(self, data):
-        """
-        Valide l'intégrité des données.
-        """
-        pass
-    
-    def clean_data(self, data):
-        """
-        Nettoie les données (gestion des valeurs manquantes, etc.).
-        """
-        pass
+        # On ne garde que les 6 premières colonnes (OHLCV + Timestamp)
+        df = df.iloc[:, :6]
+        df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+        
+        # Détection automatique de l'unité du timestamp (ms ou us)
+        ts_sample = str(df['timestamp'].iloc[0])
+        unit = 'us' if len(ts_sample) > 13 else 'ms'
+        
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit=unit)
+        
+        # Conversion numérique
+        for col in ['open', 'high', 'low', 'close', 'volume']:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+            
+        return df[['timestamp', 'open', 'high', 'low', 'close', 'volume']]
