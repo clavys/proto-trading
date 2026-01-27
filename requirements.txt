@@ -1,0 +1,16 @@
+# Core dependencies
+pandas>=2.3.0
+numpy>=2.4.0
+pandas_ta>=0.3.14b
+
+# Visualization
+matplotlib>=3.10.0
+mplfinance>=0.12.10
+plotly>=5.0.0
+
+# Trading API
+hyperliquid-python-sdk>=0.1.0
+
+# Date and time
+python-dateutil>=2.9.0
+pytz>=2025.0
