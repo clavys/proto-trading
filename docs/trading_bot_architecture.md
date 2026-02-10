@@ -41,10 +41,10 @@ hyperliquid-trading-bot/
 │   │   ├── math_utils.py                # Pour les fonctions de précision
 │   │   └── time_utils.py                # Pour convertir les formats de temps (ex: millisecondes vers objets datetime lisibles ou calcul de timestamps pour les requêtes API)
 │   │
-│   └── ai/                              # (future) section Intelligence Artificielle / Machine Learning
-│       ├── ml_models.py                 # Modèles de machine learning (Random Forest, etc.)
-│       ├── deep_learning.py             # Réseaux neuronaux (LSTM / CNN / etc.)
-│       └── reinforcement.py             # Agent de trading par renforcement
+│   └── ia/                              # section Intelligence Artificielle / Machine Learning
+│       ├── sentiment_analyzer.py        # 
+│       ├── deep_learning.py             # 
+│       └── reinforcement.py             # 
 │ 
 ├─  scripts/
 │   └── download_data.py                 # --------->  FOR YOU  <---------

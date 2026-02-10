@@ -1,16 +1,16 @@
 # Core dependencies
-pandas>=2.3.0
-numpy>=2.4.0
-pandas_ta>=0.3.14b
+pandas>=2.0.0
+numpy>=1.24.0
+python-dotenv
+hyperliquid-python-sdk
+eth-account
+matplotlib
+scipy
 
-# Visualization
-matplotlib>=3.10.0
-mplfinance>=0.12.10
-plotly>=5.0.0
-
-# Trading API
-hyperliquid-python-sdk>=0.1.0
-
-# Date and time
-python-dateutil>=2.9.0
-pytz>=2025.0
+# --- IA et NLP ---
+# PyTorch 2.6+ requis pour transformers 4.56+ (sécurité CVE-2025-32434)
+# Installation GPU CUDA 12.4: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+torch>=2.6.0
+torchvision>=0.21.0
+torchaudio>=2.6.0
+transformers>=4.56.0

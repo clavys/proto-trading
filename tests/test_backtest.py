@@ -8,7 +8,7 @@ from src.utils.visualizer import plot_backtest_results
 
 def run_simulation():
     # 1. Charger le fichier CSV (Binance n'a pas de titres de colonnes, donc header=None)
-    path = "data/raw/BTCUSDT-1m-2025-05.csv"
+    path = "data/raw/BTCUSDT-1m-2026-01-14.csv"
     #path = "data/raw/BTCUSDT-1m-2026-01-14.csv"
     #path = "data/raw/BTCUSDT-1a-2025.csv"
     raw_data = pd.read_csv(path, header=None)

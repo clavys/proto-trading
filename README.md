@@ -28,9 +28,23 @@ pip install -r requirements.txt
 
 **Contenu de requirements.txt :**
 - pandas, numpy (manipulation de données)
-- pandas_ta (indicateurs techniques)
-- matplotlib, mplfinance (visualisation)
+- matplotlib (visualisation)
 - hyperliquid-python-sdk (API trading)
+- torch, transformers (IA/NLP)
+
+### 3. Installer PyTorch (GPU ou CPU)
+
+**Pour GPU (RTX 4080 SUPER, etc.) :**
+```bash
+pip install --upgrade --force-reinstall torch --index-url https://download.pytorch.org/whl/cu124
+```
+
+**Pour CPU seulement :**
+```bash
+pip install torch
+```
+
+> **Note :** Par défaut, `pip install torch` installe la version CPU. Pour utiliser votre GPU NVIDIA, utilisez la commande GPU ci-dessus.
 
 ---
 
@@ -171,3 +185,6 @@ Copier le contenu de `recommended_param_grid.py` dans `run_optimization.py` et r
 pip install -r requirements.txt
 ```
 
+**utiliser GPU pour ia**
+pip uninstall torch torchvision torchaudio
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
