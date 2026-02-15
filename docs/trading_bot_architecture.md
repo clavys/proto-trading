@@ -43,10 +43,11 @@ hyperliquid-trading-bot/
 │   │
 │   └── ia/                              # section Intelligence Artificielle / Machine Learning
 │       ├── sentiment_analyzer.py        # 
-│       ├── deep_learning.py             # 
-│       └── reinforcement.py             # 
+│       ├── models.py                    # Définition mathématique du réseau de neurones
+│       └── price_predictor.py           # Le "cerveau" en action. Elle charge les poids entraînés, transforme les données live (via un scaler) et fournit la prédiction brute.
 │ 
 ├─  scripts/
+│   ├── train_lstm.py                    # transforme fichiers CSV bruts en fenêtres de données utilisables pour l'entraînement IA.
 │   └── download_data.py                 # --------->  FOR YOU  <---------
 │ 
 ├── config/                              # Configurations du projet
